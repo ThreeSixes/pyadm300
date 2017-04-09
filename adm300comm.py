@@ -1,6 +1,20 @@
 """
-This file was originally part of the pyadm300 library by ThreeSixes (https://github.com/ThreeSixes).
+This file is part of pyadm300 (https://github.com/ThreeSixes/pyadm300).
+
+pyadm300 is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+pyadm300 is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with pyadm300.  If not, see <http://www.gnu.org/licenses/>. 
 """
+
 import Queue
 import serial
 import threading
@@ -38,6 +52,7 @@ class adm300comm:
         
         # Default callback.
         self.__lineCb = self.__dummy
+        self.__rawCb = self.__dummy
         
         # Sentence parser
         self.__ap = adm300parse.adm300parse()
@@ -82,10 +97,11 @@ class adm300comm:
                     # Might be valid data. Send it on.
                     try:
                         # Parse the line into a dict.
-                        line = self.__ap.parseSentence(line)
+                        pLine = self.__ap.parseSentence(line)
                         
-                        # Send the dict to the callback.
-                        self.__lineCb(line)
+                        # Trigger callback for raw and parsed data.
+                        self.__rawCb(line)
+                        self.__lineCb(pLine)
                     
                     except:
                         # Couldn't parse the line or call the callback...
@@ -123,11 +139,19 @@ class adm300comm:
     
     def setCallback(self, cb):
         """
-        Set a callback function for the line of data. It must accept one argument: a dictionary containg parsed ADM-300 data.
+        Set a callback function for the parsed line of data. It must accept one argument: a dictionary containg parsed ADM-300 data.
         """
         
         # Set the reference.
         self.__lineCb = cb
+
+    def setRawCallback(self, cb):
+        """
+        Set a callback function for the raw, unparsed line of data. It must accept one argument: a string.
+        """
+        
+        # Set the reference.
+        self.__rawCb = cb
     
     def begin(self):
         """
@@ -223,46 +247,3 @@ class adm300comm:
         worked = False
         
         return worked
-
-# If this is just being called puke out a test string.
-if __name__ == "__main__":
-    from pprint import pprint
-    import traceback
-    
-    print("Start ADM-300 communications test.")
-    
-    try:
-        # Set up the communication object.
-        adc = adm300comm()
-        
-        # Set the callback we want to use to handle the dictionary of data.
-        adc.setCallback(pprint)
-        
-        # Begin serial communication.
-        adc.begin()
-        
-        # Ask the ADM-300 for updates every 2 seconds nicely.
-        adc.startReports()
-        
-        # Loop until an exception is thrown or we fire a KeyboardInterrupt/SystemExit exception.
-        while True:
-            time.sleep(1)
-    
-    except (KeyboardInterrupt, SystemExit):
-        print("\nShutting down...")
-    
-    except:
-        print("Explosion:\n%s" %traceback.format_exc())
-    
-    finally:
-        try:
-            # Stop the serial reports.
-            adc.stopReports()
-            
-            # Send threads the shutodwn command.
-            adc.kill()
-        
-        except:
-            None
-    
-    print("Finally exiting.")
