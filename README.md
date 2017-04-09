@@ -12,9 +12,10 @@ Dependencies:
 pyserial - A python serial communication library. It can be installed on Ubuntu systems using: sudo apt-get install python-serial, or can be installed from pip.
 
 Limitations:
-- ADM-300 instruments that display readings in Sv will get incorrect readings until I have some data samples from units that read in Sv.
-- The library does not yet support configuring the alarm thresholds for dose rate and accumulated dose.
-- The library may not work well with external probes until I can get some data sentences with probes connected. I only have the ADM-300 and no external Smart Probes to experiment with. If someone out there has external probes and wants to help out submit the raw sentences from the ADM-300 with the probe connected and the model of probe. Just attach the output to the open issue.
+- Verifying data with the checksum is not yet supported as I'm not sure what sort of checksum the ADM-300 generates. Update the issue at: https://github.com/ThreeSixes/pyadm300/issues/4
+- ADM-300 instruments that display readings in Sv will get incorrect readings until I have some data samples from units that read in Sv. Update the issue at: https://github.com/ThreeSixes/pyadm300/issues/2
+- The library does not yet support configuring the alarm thresholds for dose rate and accumulated dose. https://github.com/ThreeSixes/pyadm300/issues/1
+- The library may not work well with external probes until I can get some data sentences with probes connected. I only have the ADM-300 and no external Smart Probes to experiment with. If someone out there has external probes and wants to help out submit the raw sentences from the ADM-300 with the probe connected and the model of probe. https://github.com/ThreeSixes/pyadm300/issues/3
 
 Providing output for expanding the software and parsing:
 - adm300comm.setRawCallback(pprint) method can be used to dump the raw sentences from the ADM-300 for submitting them to me via the issue tracker at https://github.com/ThreeSixes/pyadm300/issues.
