@@ -9,7 +9,7 @@ Files:
 - LICENSE - A copy of the GPLv3 license.
 
 Dependencies:
-pyserial - A python serial communication library. It can be istalled on Ubuntu systems using: sudo apt-get install python-serial
+pyserial - A python serial communication library. It can be installed on Ubuntu systems using: sudo apt-get install python-serial, or can be installed from pip.
 
 Limitations:
 - ADM-300 instruments that display readings in Sv will get incorrect readings until I have some data samples from units that read in Sv.
