@@ -32,6 +32,13 @@ class adm300comm:
         self.__baud = baud
         self.__timeout = timeout
         
+        # Device messages
+        self.__admPO = chr(0x01)
+        
+        # Status flags
+        self.__gotPO = False
+        self.__gotSentence = False
+        
         # Pre and post-command chars.
         self.__cmdPrefix = "\r\n" # [0x0d, 0x0a]
         self.__cmdTail = "}\r\n"
@@ -50,24 +57,62 @@ class adm300comm:
         # This flag tells us if we should keep running.
         self.__keepRunning = True
         
-        # Default callback.
+        # Set default callbacks.
         self.__lineCb = self.__dummy
         self.__rawCb = self.__dummy
+        self.__pwrCb = self.__dummy
+        
+        # Hold last reports from ADM-300.
+        self.__lastReport = {'valid': False}
+        self.__lastRawReport = ""
         
         # Sentence parser
         self.__ap = adm300parse.adm300parse()
         
         # Set up serial comm object.
         try:
-            # http://pyserial.readthedocs.io/en/latest/shortintro.html
+            # Set up serial port.
             self.__ser = serial.Serial(self.__dev, self.__baud, timeout=self.__timeout)
         
         except:
             raise
     
-    def __dummy(self, arg):
+    
+    @property
+    def gotPowerOn(self):
         """
-        Dummy callback for data sentences.
+        Did we get a power on character?
+        """
+        
+        return self.__gotPO
+
+    @property
+    def gotSentence(self):
+        """
+        Did we get a sentence?
+        """
+        
+        return self.__gotSentence
+    
+    @property
+    def lastReport(self):
+        """
+        Returns the last parsed report we got from the ADM-300.
+        """
+        
+        return self.__lastReport
+
+    @property
+    def lastRawReport(self):
+        """
+        Returns the last raw report we got from the ADM-300.
+        """
+        
+        return self.__lastRawReport
+    
+    def __dummy(self, arg = ""):
+        """
+        Dummy callback.
         """
         
         return
@@ -78,13 +123,16 @@ class adm300comm:
         """
         
         try:
+            # As long as the thread is flagged to keep running...
             while self.__keepRunning:
                 try:
                     # Do we have a command to send the ADM-300?
                     workItem = self.__txQ.get(False)
+                    # Send it!
                     self.__ser.write(workItem)
-                    
+                
                 except Queue.Empty:
+                    # Don't have data, don't care.
                     None
                 
                 except:
@@ -92,20 +140,36 @@ class adm300comm:
                 
                 # Grab a line.
                 line = self.__ser.readline()
-                # Is it 47 chars long?
-                if len(line) == 47:
-                    # Might be valid data. Send it on.
-                    try:
-                        # Parse the line into a dict.
-                        pLine = self.__ap.parseSentence(line)
-                        
-                        # Trigger callback for raw and parsed data.
-                        self.__rawCb(line)
-                        self.__lineCb(pLine)
-                    
-                    except:
-                        # Couldn't parse the line or call the callback...
-                        None
+                
+                # Line isn't blank or just a carriage return + line feed?
+                if (not line == "\r\n") and (not line == ''):
+                        # Did we get something that isn't a single char?
+                        if len(line) > 1:
+                            try:
+                                # Set the last raw report and trigger callback.
+                                self.__lastRawReport = line
+                                self.__rawCb(line)
+                                
+                                # Parse the data, set the last report, and trigger callback.
+                                pLine = self.__ap.parseSentence(line)
+                                self.__lastReport = pLine
+                                self.__lineCb(pLine)
+                                
+                                # Set the flag for getting a sentence.
+                                self.__gotSentence = True
+                            
+                            except:
+                                # Don't kill the thread due to a parsing failure.
+                                # Exceptions should be handled in callback methods.
+                                None
+                        else:    
+                            # We might have a power on character. Check for it.
+                            if (line == self.__admPO) and (self.__gotPO == False):
+                                # Set powered on flag.
+                                self.__gotPO = True
+                                
+                                # Trigger callback for power up.
+                                self.__pwrCb()
                 
                 # Wait so we don't suck CPU up completely.
                 time.sleep(0.01)
@@ -136,6 +200,14 @@ class adm300comm:
         
         # Set shutdown flag.
         self.__keepRunning = False
+    
+    def setPowerOnCallback(self, cb):
+        """
+        Set a callback function for the device powering up.
+        """
+        
+        # Set the reference.
+        self.__pwrCb = cb
     
     def setCallback(self, cb):
         """
