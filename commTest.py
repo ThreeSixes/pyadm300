@@ -55,8 +55,8 @@ def printAll(data):
 print("Start ADM-300 communications test. Press Ctrl+C to quit.")
 
 try:
-    # Set up the communication object.
-    adc = adm300comm.adm300comm(dev='/dev/ttyUSB1')
+    # Set up the communication object. Could be COM3 in Windows for example.
+    adc = adm300comm.adm300comm(dev='/dev/ttyUSB0')
     
     # Set the callback we want to use to handle raw data [optional]
     adc.setRawCallback(dumpRawHex)
