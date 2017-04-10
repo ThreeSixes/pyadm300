@@ -15,6 +15,9 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with pyadm300.  If not, see <http://www.gnu.org/licenses/>.
+
+This file demostrates how to get communication with an ADM-300
+running via callbacks.
 """
 
 import time
@@ -22,23 +25,64 @@ import traceback
 import adm300comm
 from pprint import pprint
 
+def dumpRawHex(data):
+    """
+    Dump raw data as hex.
+    """
+    
+    try:
+        #print(" ".join("{:02x}".format(ord(c)) for c in data))
+        print(data)
+    
+    except:
+        print("Exception:\n%s" %traceback.format_exc())
+    
+    return
+
+def printAll(data):
+    """
+    Pretty print our data.
+    """
+    
+    try:
+        pprint(data)
+    
+    except:
+        print("Exception:\n%s" %traceback.format_exc())
+    
+    return
+
 print("Start ADM-300 communications test. Press Ctrl+C to quit.")
 
 try:
     # Set up the communication object.
-    adc = adm300comm.adm300comm()
+    adc = adm300comm.adm300comm(dev='/dev/ttyUSB1')
     
     # Set the callback we want to use to handle raw data [optional]
-    adc.setRawCallback(pprint)
+    adc.setRawCallback(dumpRawHex)
     
     # Set the callback we want to use to handle the dictionary of data.
-    adc.setCallback(pprint)
+    adc.setCallback(printAll)
     
     # Begin serial communication.
     adc.begin()
     
-    # Ask the ADM-300 for updates every 2 seconds nicely.
-    adc.startReports()
+    print "Waiting for ADM-300 to be powered up..."
+    
+    # Loop until we see the ADM-300 power up or get valid data...
+    while (not adc.gotPowerOn) and (not adc.gotSentence):
+        # Wait.
+        time.sleep(0.01)
+    
+    # If we haven't gotten reports yet...
+    if not adc.gotSentence:
+        print("Powered up. Waiting for ADM-300 to settle...")
+        time.sleep(5)
+        
+        print("Requesting readings...")
+        
+        # Ask the ADM-300 for reports...
+        adc.startReports()
     
     # Loop until an exception is thrown or we fire a KeyboardInterrupt/SystemExit exception.
     while True:
