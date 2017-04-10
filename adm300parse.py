@@ -37,8 +37,8 @@ class adm300parse:
         self.__bootChars = [0x00, 0x00] # FIX ME!!!
         
         # Symbols.
-        self.__symR = "R/hr"
-        self.__symSv = "Sv/hr" # Not implemented.
+        self.__symR = "R"
+        self.__symSv = "Sv" # Not implemented.
         
         # Structure of readings.
         # Example:
@@ -218,7 +218,7 @@ class adm300parse:
                     'doseAlarm': doseAlarm, # Is the accumulated dose alarm active?
                     'battAlarm': battAlarm, # Is the low battery alarm active?
                     'probe': probe, # Probe information.
-                    'unit': self.__symR, # This should be set up as either R/hr or Sv/hr depending on decimal placement in dose rate? IDK.
+                    'doseUnit': self.__symR, # This should be set up as either R/hr or Sv/hr depending on decimal placement in dose rate? IDK.
                     'checksum': int(retVal.pop('cksum'), 16) # Checksum as integer. Need to verify it.
                 })
                 
