@@ -73,6 +73,8 @@ class adm300comm:
         
         # Set up serial comm object.
         try:
+            if self.__debug: print("%s: Init serial port %s with timeout %s." %(self.__dName, self.__dev, self.__timeout))
+            
             # Set up serial port.
             self.__ser = serial.Serial(self.__dev, self.__baud, timeout=self.__timeout)
         
@@ -123,6 +125,8 @@ class adm300comm:
         """
         This thread communicates with the ADM-300.
         """
+        
+        if self.__debug: print("%s: Start serial thread..." %(self.__dName))
         
         try:
             # As long as the thread is flagged to keep running...
@@ -238,6 +242,7 @@ class adm300comm:
         """
         Spin up the serial comms thread.
         """
+        if self.__debug: print("%s: Calling serial comms thread..." %(self.__dName))
         
         self.__serWk = threading.Thread(target=self.__serThread)
         self.__serWk.daemon = True
