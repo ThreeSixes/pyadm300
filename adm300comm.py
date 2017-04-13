@@ -22,7 +22,7 @@ import time
 import adm300parse
 
 class adm300comm:
-    def __init__(self, dev="/dev/ttyUSB0", baud=300, timeout=0.1):
+    def __init__(self, dev="/dev/ttyUSB0", baud=300, timeout=0.1, debug=False):
         """
         Canberra/NRC ADM-300 communication class.
         """
@@ -31,6 +31,8 @@ class adm300comm:
         self.__dev = dev
         self.__baud = baud
         self.__timeout = timeout
+        self.__debug = debug
+        self.__dName = "adm300comm"
         
         # Device messages
         self.__admPO = chr(0x01)
@@ -67,7 +69,7 @@ class adm300comm:
         self.__lastRawReport = ""
         
         # Sentence parser
-        self.__ap = adm300parse.adm300parse()
+        self.__ap = adm300parse.adm300parse(debug=debug)
         
         # Set up serial comm object.
         try:
@@ -128,6 +130,10 @@ class adm300comm:
                 try:
                     # Do we have a command to send the ADM-300?
                     workItem = self.__txQ.get(False)
+                    
+                    # Debug?
+                    if self.__debug: print("%s: Putting %s on serial port..." %(self.__dName, workItem))
+                    
                     # Send it!
                     self.__ser.write(workItem)
                 
@@ -184,6 +190,9 @@ class adm300comm:
         try:
             # Build the command string.
             sendCmd = "%s%s%s" %(self.__cmdPrefix, cmdStr, self.__cmdTail)
+            
+            # Debug
+            if self.__debug: print("%s: Putting %s on the queue..." %(self.__dName, sendCmd))
             
             # Write the thing to the port.
             self.__txQ.put(sendCmd, block=False)

@@ -19,13 +19,14 @@ along with pyadm300.  If not, see <http://www.gnu.org/licenses/>.
 import math
 
 class adm300parse:
-    def __init__(self):
+    def __init__(self, debug=False):
         """
         Python class parse sentences from Canberra/NRC ADM-300 survey meter.
         """
         
-        # Baud rate
-        self.__baud = 300
+        # Debug?
+        self.__debug = debug
+        self.__dName = "adm300parse"
         
         # Fixed-length sentence.
         self.__sentenceLen = 47
@@ -45,7 +46,7 @@ class adm300parse:
         # 01a020-1 003-1 000-1 ...L.I00U00A2521 600-1 55]
         self.__readingStruct = {
             'seqNo': [0, 2], # Sequence number. Increments per line.
-            'id': [2, 3], # ADM-300 id is "a"
+            'id': [2, 3], # ADM-300 ID is "a"
             'rtRaw': [3, 8], # Raw rate in NNNSE format
             'dsRaw': [9, 14], # Dose rate DDSE
             'uRtRaw': [15, 20], # Unfiltered dose rate UUUSE
@@ -54,6 +55,14 @@ class adm300parse:
             'dbgDat': [38, 43], # Debug data.
             'cksum': [44, 46] # Checksum
         }
+    
+    @property
+    def sentenceLen(self):
+        """
+        Length of ADM-300 data sentences.
+        """
+        
+        return self.__sentenceLen
     
     def parseNumNotation(self, sciStr):
         """
